@@ -30,7 +30,6 @@ use doganoo\Recommender\Exception\InvalidRatingException;
 use doganoo\Recommender\Exception\WeightTooLessException;
 use doganoo\Recommender\Exception\WeightTooMuchException;
 use doganoo\Recommender\Recommendation\Feature\IFeature;
-use doganoo\Recommender\Recommendation\Rating\IRatingRange;
 use doganoo\Recommender\Service\IRecommendationService;
 
 /**
@@ -52,8 +51,8 @@ class HybridEngine {
     /** @var IFloatService */
     private $floatService;
 
-    /** @var IRatingRange */
-    private $ratingRange;
+    /** @var float */
+    private $recommendationThreshold;
 
     /**
      * HybridEngine constructor.
@@ -121,13 +120,11 @@ class HybridEngine {
      * @param IFeature               $feature The feature to that recommendations are seeked
      *
      * @return HashTable The table of recommendations
-     * @throws InvalidRatingException thrown when the rating is out of bounds
      * @throws InvalidKeyTypeException thrown when a key is not found in a HashTable (should not happen)
      * @throws UnsupportedKeyTypeException thrown when a key is not found in a HashTable (should not happen)
      */
     private function getRecommendationsForService(IRecommendationService $service, IFeature $feature): HashTable {
-        $results     = new HashTable();
-        $ratingRange = $this->getRatingRange();
+        $results = new HashTable();
 
         $service->reset();
         $service->calculate($feature);
@@ -139,17 +136,12 @@ class HybridEngine {
 
             if ($feature->getId() === $candidateFeature->getId()) continue;
 
-            if (false === $this->floatService->isBetween(
+            if (true === $this->floatService->greaterThan(
                     $similarity
-                    , $ratingRange->getLowerBound()
-                    , $ratingRange->getUpperBound()
+                    , $this->getRecommendationThreshold()
                     , true
                 )
             ) {
-                throw new InvalidRatingException();
-            }
-
-            if ($similarity > $ratingRange->getRecommendationThreshold()) {
                 $results->put($candidateFeature, $similarity);
             }
         }
@@ -157,12 +149,17 @@ class HybridEngine {
     }
 
     /**
-     * Returns the rating range
-     *
-     * @return IRatingRange
+     * @return float
      */
-    public function getRatingRange(): IRatingRange {
-        return $this->ratingRange;
+    public function getRecommendationThreshold(): float {
+        return $this->recommendationThreshold;
+    }
+
+    /**
+     * @param float $recommendationThreshold
+     */
+    public function setRecommendationThreshold(float $recommendationThreshold): void {
+        $this->recommendationThreshold = $recommendationThreshold;
     }
 
     /**
@@ -197,15 +194,6 @@ class HybridEngine {
         }
 
         return $allResults;
-    }
-
-    /**
-     * Sets the rating range
-     *
-     * @param IRatingRange $ratingRange
-     */
-    public function setRatingRate(IRatingRange $ratingRange): void {
-        $this->ratingRange = $ratingRange;
     }
 
 }

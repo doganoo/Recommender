@@ -25,8 +25,10 @@ use doganoo\DI\Object\Float\IFloatService;
 use doganoo\PHPAlgorithms\Common\Exception\InvalidKeyTypeException;
 use doganoo\PHPAlgorithms\Common\Exception\UnsupportedKeyTypeException;
 use doganoo\PHPAlgorithms\Datastructure\Table\HashTable;
+use doganoo\Recommender\Exception\InvalidRatingException;
 use doganoo\Recommender\Recommendation\Feature\IFeature;
 use doganoo\Recommender\Recommendation\Rater\IRater;
+use doganoo\Recommender\Service\CollaborativeFiltering\Rating\Range\IRange;
 
 /**
  * Class CosineComputer
@@ -42,8 +44,15 @@ class CosineComputer {
     /** @var IFloatService */
     private $floatService;
 
-    public function __construct(IFloatService $floatService) {
+    /** @var IRange */
+    private $range;
+
+    public function __construct(
+        IFloatService $floatService
+        , IRange $range
+    ) {
         $this->floatService = $floatService;
+        $this->range        = $range;
     }
 
     /**
@@ -53,6 +62,7 @@ class CosineComputer {
      * @return float
      * @throws InvalidKeyTypeException
      * @throws UnsupportedKeyTypeException
+     * @throws InvalidRatingException
      */
     public function compute(IFeature $first, IFeature $second): float {
 
@@ -84,6 +94,13 @@ class CosineComputer {
             $secondRater  = $second->getRaters()->get($rater->getId());
             $secondRating = $secondRater->getRating();
 
+            if (false === $this->inRange($firstRating)) {
+                throw new InvalidRatingException();
+            }
+            if (false === $this->inRange($secondRating)) {
+                throw new InvalidRatingException();
+            }
+
             $numerator         = $numerator + ($firstRating * $secondRating);
             $firstDenominator  = $firstDenominator + (pow($firstRating, 2));
             $secondDenominator = $secondDenominator + (pow($secondRating, 2));
@@ -111,6 +128,14 @@ class CosineComputer {
         }
 
         return $result;
+    }
+
+    private function inRange(float $value): bool {
+        return $this->floatService->isBetween(
+            $value
+            , $this->range->getLowerBound()
+            , $this->range->getUpperBound()
+        );
     }
 
 
