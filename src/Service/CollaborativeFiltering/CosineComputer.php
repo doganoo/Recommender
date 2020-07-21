@@ -47,12 +47,16 @@ class CosineComputer {
     /** @var IRange */
     private $range;
 
+    /** @var HashTable */
+    private $cache;
+
     public function __construct(
         IFloatService $floatService
         , IRange $range
     ) {
         $this->floatService = $floatService;
         $this->range        = $range;
+        $this->cache        = new HashTable();
     }
 
     /**
@@ -71,12 +75,22 @@ class CosineComputer {
         // base case 1: the similarity is equal to one if you pass the same object
         if ($first->getId() === $second->getId()) return CosineComputer::SIMILARITY_EQUAL;
 
+        // base case 2: the values could be cached. Check first!
+        $cachedValue = $this->getCachedValue($first, $second);
+
+        if (null !== $cachedValue && true === is_float($cachedValue)) return $cachedValue;
+
+        // the values could also be cached in reverse order
+        $cachedValue = $this->getCachedValue($second, $first);
+
+        if (null !== $cachedValue && true === is_float($cachedValue)) return $cachedValue;
+
         // step 1: we need to know the common raters of both features. Only by
         // comparing the common raters we can build a similarity. All other raters
         // are excluded here
         $commonRaters = $this->getIntersection($first->getRaters(), $second->getRaters());
 
-        // base case 2: do not do anything if there are no common raters
+        // base case 3: do not do anything if there are no common raters
         if (0 === $commonRaters->size()) return (float) CosineComputer::SIMILARITY_NOT_EQUAL;
 
         // step 2: apply cosine based similarity function
@@ -118,6 +132,15 @@ class CosineComputer {
         return $similarity;
     }
 
+    public function getCachedValue(IFeature $first, IFeature $second): ?float {
+        if (false === $this->cache->containsKey($first)) return null;
+        /** @var HashTable $field */
+        $field = $this->cache->get($first);
+
+        if (false === $field->containsKey($second)) return null;
+        return $field->get($second);
+    }
+
     private function getIntersection(HashTable $first, HashTable $second): HashTable {
         $result = new HashTable();
         foreach ($first->keySet() as $key) {
@@ -135,7 +158,19 @@ class CosineComputer {
             $value
             , $this->range->getLowerBound()
             , $this->range->getUpperBound()
+            , true
         );
+    }
+
+    private function cache(IFeature $first, IFeature $second, float $similarity): void {
+
+        $field = new HashTable();
+        if (true === $this->cache->containsKey($first)) {
+            $field = $this->cache->get($first);
+        }
+
+        $field->put($second, $similarity);
+        $this->cache->put($first, $field);
     }
 
 

@@ -28,6 +28,7 @@ use doganoo\PHPAlgorithms\Common\Exception\InvalidKeyTypeException;
 use doganoo\PHPAlgorithms\Common\Exception\UnsupportedKeyTypeException;
 use doganoo\Recommender\Recommendation\Feature\IFeature;
 use doganoo\Recommender\Service\CollaborativeFiltering\CosineComputer;
+use doganoo\Recommender\Service\CollaborativeFiltering\Rating\Range\BinaryRange;
 use doganoo\Recommender\Service\HashTableService;
 use doganoo\Recommender\Test\Recommendation\Feature\Feature;
 use doganoo\Recommender\Test\Recommendation\Rater\Rater;
@@ -109,7 +110,10 @@ class CosineComputerTest extends TestCase {
     protected function setUp() {
         parent::setUp();
         $this->floatService   = new FloatService();
-        $this->cosineComputer = new CosineComputer($this->floatService);
+        $this->cosineComputer = new CosineComputer(
+            $this->floatService
+            , new BinaryRange()
+        );
     }
 
 }

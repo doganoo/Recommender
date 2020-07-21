@@ -29,9 +29,9 @@ use doganoo\Recommender\Engine\HybridEngine;
 use doganoo\Recommender\Exception\WeightTooLessException;
 use doganoo\Recommender\Exception\WeightTooMuchException;
 use doganoo\Recommender\Recommendation\Feature\IFeature;
-use doganoo\Recommender\Recommendation\Rating\BinaryRatingRange;
 use doganoo\Recommender\Service\CollaborativeFiltering\CollaborativeFiltering;
 use doganoo\Recommender\Service\CollaborativeFiltering\CosineComputer;
+use doganoo\Recommender\Service\CollaborativeFiltering\Rating\Range\BinaryRange;
 use doganoo\Recommender\Test\Repository\Feature\FeatureRepository;
 use doganoo\Recommender\Test\Suite\TestCase;
 
@@ -48,14 +48,17 @@ class HybridEngineTest extends TestCase {
         $engine       = new HybridEngine(
             $floatService
         );
-        $engine->setRatingRate(new BinaryRatingRange());
 
         $featureRepository = new FeatureRepository();
 
+        $engine->setRecommendationThreshold(0.2);
         $engine->register(
             new CollaborativeFiltering(
                 $featureRepository
-                , new CosineComputer($floatService)
+                , new CosineComputer(
+                    $floatService
+                    , new BinaryRange()
+                )
             ));
 
 
