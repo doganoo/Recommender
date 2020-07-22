@@ -24,11 +24,11 @@ namespace doganoo\Recommender\Service\CollaborativeFiltering;
 use doganoo\DI\Object\Float\IFloatService;
 use doganoo\PHPAlgorithms\Common\Exception\InvalidKeyTypeException;
 use doganoo\PHPAlgorithms\Common\Exception\UnsupportedKeyTypeException;
-use doganoo\PHPAlgorithms\Datastructure\Table\HashTable;
 use doganoo\Recommender\Exception\InvalidRatingException;
 use doganoo\Recommender\Recommendation\Feature\IFeature;
 use doganoo\Recommender\Recommendation\Rater\IRater;
 use doganoo\Recommender\Service\CollaborativeFiltering\Rating\Range\IRange;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class CosineComputer
@@ -47,16 +47,20 @@ class CosineComputer {
     /** @var IRange */
     private $range;
 
-    /** @var HashTable */
-    private $cache;
+    /** @var array */
+    private $cache = [];
+
+    /** @var LoggerInterface */
+    private $logger;
 
     public function __construct(
         IFloatService $floatService
         , IRange $range
+        , LoggerInterface $logger
     ) {
         $this->floatService = $floatService;
         $this->range        = $range;
-        $this->cache        = new HashTable();
+        $this->logger       = $logger;
     }
 
     /**
@@ -73,39 +77,40 @@ class CosineComputer {
         $firstDenominator = $secondDenominator = $denominator = $numerator = $similarity = 0;
 
         // base case 1: the similarity is equal to one if you pass the same object
-        if ($first->getId() === $second->getId()) return CosineComputer::SIMILARITY_EQUAL;
+        if ($first->getId() === $second->getId()) {
+            $this->logger->info("{$first->getId()} and {$second->getId()} are equal and similarity: " . CosineComputer::SIMILARITY_EQUAL);
+            return CosineComputer::SIMILARITY_EQUAL;
+        }
 
         // base case 2: the values could be cached. Check first!
         $cachedValue = $this->getCachedValue($first, $second);
 
-        if (null !== $cachedValue && true === is_float($cachedValue)) return $cachedValue;
+        if (null !== $cachedValue && true === is_float($cachedValue)) {
+            $this->logger->info("found a cached value for {$first->getId()} -> {$second->getId()}: $cachedValue");
+            return $cachedValue;
+        }
 
         // the values could also be cached in reverse order
         $cachedValue = $this->getCachedValue($second, $first);
 
-        if (null !== $cachedValue && true === is_float($cachedValue)) return $cachedValue;
-
-        // step 1: we need to know the common raters of both features. Only by
-        // comparing the common raters we can build a similarity. All other raters
-        // are excluded here
-        $commonRaters = $this->getIntersection($first->getRaters(), $second->getRaters());
-
-        // base case 3: do not do anything if there are no common raters
-        if (0 === $commonRaters->size()) return (float) CosineComputer::SIMILARITY_NOT_EQUAL;
+        if (null !== $cachedValue && true === is_float($cachedValue)) {
+            $this->logger->info("found a cached value for {$second->getId()} -> {$first->getId()}: $cachedValue");
+            return $cachedValue;
+        }
 
         // step 2: apply cosine based similarity function
         // since we determined the common raters and can be sure
         // the raters are present in both features, we can simply
         // iterate over the raters and pick the rating
-        /** @var IRater $rater */
-        foreach ($commonRaters->keySet() as $raterId) {
-            $rater = $commonRaters->get($raterId);
+        foreach ($first->getRaters()->keySet() as $firstRaterId) {
             /** @var IRater $firstRater */
-            $firstRater  = $first->getRaters()->get($rater->getId());
+            $firstRater  = $first->getRaters()->get($firstRaterId);
             $firstRating = $firstRater->getRating();
 
+            if (false === $second->getRaters()->containsKey($firstRaterId)) continue;
+
             /** @var IRater $secondRater */
-            $secondRater  = $second->getRaters()->get($rater->getId());
+            $secondRater  = $second->getRaters()->get($firstRaterId);
             $secondRating = $secondRater->getRating();
 
             if (false === $this->inRange($firstRating)) {
@@ -129,28 +134,18 @@ class CosineComputer {
             $similarity = $numerator / $denominator;
         }
 
+        $this->cache($first, $second, $similarity);
         return $similarity;
     }
 
     public function getCachedValue(IFeature $first, IFeature $second): ?float {
-        if (false === $this->cache->containsKey($first)) return null;
-        /** @var HashTable $field */
-        $field = $this->cache->get($first);
+        $f = $this->cache[$first->getId()] ?? null;
+        if (null === $f) return null;
 
-        if (false === $field->containsKey($second)) return null;
-        return $field->get($second);
-    }
+        $s = $f[$second->getId()] ?? null;
+        if (null === $s) return null;
 
-    private function getIntersection(HashTable $first, HashTable $second): HashTable {
-        $result = new HashTable();
-        foreach ($first->keySet() as $key) {
-
-            if (true === $second->containsKey($key)) {
-                $result->put($key, $first->get($key));
-            }
-        }
-
-        return $result;
+        return $s;
     }
 
     private function inRange(float $value): bool {
@@ -163,14 +158,23 @@ class CosineComputer {
     }
 
     private function cache(IFeature $first, IFeature $second, float $similarity): void {
-
-        $field = new HashTable();
-        if (true === $this->cache->containsKey($first)) {
-            $field = $this->cache->get($first);
+        // cache in regular order
+        $f = $this->cache[$first->getId()] ?? null;
+        if (null === $f) {
+            $f = [];
         }
+        $f[$second->getId()] = $similarity;
+        $this->cache[$first->getId()] = $f;
 
-        $field->put($second, $similarity);
-        $this->cache->put($first, $field);
+        // cache in reverse order
+        $s = $this->cache[$second->getId()] ?? null;
+        if (null === $s) {
+            $s = [];
+        }
+        $s[$first->getId()] = $similarity;
+        $this->cache[$second->getId()] = $s;
+
+
     }
 
 
