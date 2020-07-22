@@ -33,6 +33,7 @@ use doganoo\Recommender\Service\HashTableService;
 use doganoo\Recommender\Test\Recommendation\Feature\Feature;
 use doganoo\Recommender\Test\Recommendation\Rater\Rater;
 use doganoo\Recommender\Test\Suite\TestCase;
+use Psr\Log\NullLogger;
 
 class CosineComputerTest extends TestCase {
 
@@ -113,6 +114,7 @@ class CosineComputerTest extends TestCase {
         $this->cosineComputer = new CosineComputer(
             $this->floatService
             , new BinaryRange()
+            , new NullLogger()
         );
     }
 

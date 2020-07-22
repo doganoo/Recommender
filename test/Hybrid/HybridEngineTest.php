@@ -34,6 +34,7 @@ use doganoo\Recommender\Service\CollaborativeFiltering\CosineComputer;
 use doganoo\Recommender\Service\CollaborativeFiltering\Rating\Range\BinaryRange;
 use doganoo\Recommender\Test\Repository\Feature\FeatureRepository;
 use doganoo\Recommender\Test\Suite\TestCase;
+use Psr\Log\NullLogger;
 
 class HybridEngineTest extends TestCase {
 
@@ -58,6 +59,7 @@ class HybridEngineTest extends TestCase {
                 , new CosineComputer(
                     $floatService
                     , new BinaryRange()
+                    , new NullLogger()
                 )
             ));
 
