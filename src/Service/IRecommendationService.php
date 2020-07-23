@@ -73,4 +73,6 @@ interface IRecommendationService {
      */
     public function getName(): string;
 
+    public function setThreshold(float $threshold): void;
+
 }

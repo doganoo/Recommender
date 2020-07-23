@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace doganoo\Recommender\Test\Repository\Feature;
 
+use doganoo\Recommender\Recommendation\Rater\IRater;
 use doganoo\Recommender\Repository\Feature\IFeatureRepository;
 use doganoo\Recommender\Test\Recommendation\Feature\Feature;
 use doganoo\Recommender\Test\Recommendation\Rater\Rater;
@@ -71,6 +72,5 @@ class FeatureRepository implements IFeatureRepository {
 
         return $features;
     }
-
 
 }

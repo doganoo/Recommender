@@ -134,18 +134,14 @@ class CosineComputer {
             $similarity = $numerator / $denominator;
         }
 
+        $this->logger->info("no cached value found, going to cache $similarity for {$first->getId()} -> {$second->getId()}");
         $this->cache($first, $second, $similarity);
         return $similarity;
     }
 
     public function getCachedValue(IFeature $first, IFeature $second): ?float {
-        $f = $this->cache[$first->getId()] ?? null;
-        if (null === $f) return null;
-
-        $s = $f[$second->getId()] ?? null;
-        if (null === $s) return null;
-
-        return $s;
+        if (false === isset($this->cache[$first->getId()][$second->getId()])) return null;
+        return $this->cache[$first->getId()][$second->getId()];
     }
 
     private function inRange(float $value): bool {
@@ -158,23 +154,7 @@ class CosineComputer {
     }
 
     private function cache(IFeature $first, IFeature $second, float $similarity): void {
-        // cache in regular order
-        $f = $this->cache[$first->getId()] ?? null;
-        if (null === $f) {
-            $f = [];
-        }
-        $f[$second->getId()] = $similarity;
-        $this->cache[$first->getId()] = $f;
-
-        // cache in reverse order
-        $s = $this->cache[$second->getId()] ?? null;
-        if (null === $s) {
-            $s = [];
-        }
-        $s[$first->getId()] = $similarity;
-        $this->cache[$second->getId()] = $s;
-
-
+        $this->cache[$first->getId()][$second->getId()] = $similarity;
     }
 
 

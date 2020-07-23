@@ -100,8 +100,12 @@ class HybridEngine {
                 throw new WeightTooMuchException();
             }
 
-            $results    = $this->getRecommendationsForService($service, $feature);
-            $allResults = $this->mergeRecommendations($allResults, $results, $service->getWeight());
+            $service->reset();
+            $service->setThreshold(0.2);
+            $service->calculate($feature);
+            $results = $service->getResult();
+            // $results = $this->mergeRecommendations($allResults, $results, $service->getWeight());
+            $allResults = $results;
         }
 
         if ($this->floatService->lessThan($totalWeight, 1, false)) {
@@ -109,57 +113,6 @@ class HybridEngine {
         }
 
         return $allResults;
-    }
-
-    /**
-     * Makes recommendations using a given service.
-     *
-     * The recommendations for a feature are measured by a given service.
-     *
-     * @param IRecommendationService $service The service that measures
-     * @param IFeature               $feature The feature to that recommendations are seeked
-     *
-     * @return HashTable The table of recommendations
-     * @throws InvalidKeyTypeException thrown when a key is not found in a HashTable (should not happen)
-     * @throws UnsupportedKeyTypeException thrown when a key is not found in a HashTable (should not happen)
-     */
-    private function getRecommendationsForService(IRecommendationService $service, IFeature $feature): HashTable {
-        $results = new HashTable();
-
-        $service->reset();
-        $service->calculate($feature);
-        $candidateFeatures = $service->getResult();
-
-        /** @var IFeature $candidateFeature */
-        foreach ($candidateFeatures->keySet() as $candidateFeature) {
-            $similarity = $candidateFeatures->get($candidateFeature);
-
-            if ($feature->getId() === $candidateFeature->getId()) continue;
-
-            if (true === $this->floatService->greaterThan(
-                    $similarity
-                    , $this->getRecommendationThreshold()
-                    , true
-                )
-            ) {
-                $results->put($candidateFeature, $similarity);
-            }
-        }
-        return $results;
-    }
-
-    /**
-     * @return float
-     */
-    public function getRecommendationThreshold(): float {
-        return $this->recommendationThreshold;
-    }
-
-    /**
-     * @param float $recommendationThreshold
-     */
-    public function setRecommendationThreshold(float $recommendationThreshold): void {
-        $this->recommendationThreshold = $recommendationThreshold;
     }
 
     /**

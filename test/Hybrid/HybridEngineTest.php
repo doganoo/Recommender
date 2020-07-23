@@ -52,7 +52,6 @@ class HybridEngineTest extends TestCase {
 
         $featureRepository = new FeatureRepository();
 
-        $engine->setRecommendationThreshold(0.2);
         $engine->register(
             new CollaborativeFiltering(
                 $featureRepository
@@ -61,6 +60,7 @@ class HybridEngineTest extends TestCase {
                     , new BinaryRange()
                     , new NullLogger()
                 )
+                , $floatService
             ));
 
 
