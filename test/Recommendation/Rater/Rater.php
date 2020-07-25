@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace doganoo\Recommender\Test\Recommendation\Rater;
 
+use doganoo\PHPAlgorithms\Common\Util\Comparator;
 use doganoo\Recommender\Recommendation\Rater\IRater;
 
 class Rater implements IRater {
@@ -62,6 +63,15 @@ class Rater implements IRater {
      */
     public function setRating(float $rating): void {
         $this->rating = $rating;
+    }
+
+    public function compareTo($object): int {
+        if ($object instanceof IRater) {
+            if (Comparator::equals($this->getId(), $object->getId())) return 0;
+            if (Comparator::lessThan($this->getId(), $object->getId())) return -1;
+            if (Comparator::greaterThan($this->getId(), $object->getId())) return 1;
+        }
+        return -1;
     }
 
 }

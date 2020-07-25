@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace doganoo\Recommender\Recommendation\Feature;
 
+use doganoo\PHPAlgorithms\Datastructure\Graph\Tree\BinarySearchTree;
 use doganoo\PHPAlgorithms\Datastructure\Table\HashTable;
 
 /**
@@ -52,5 +53,14 @@ interface IFeature {
      * @return HashTable
      */
     public function getRaters(): HashTable;
+
+    /**
+     * Returns all raters of the feature as a binary search tree
+     *
+     * The purpose is to have a better performance when searching raters
+     *
+     * @return BinarySearchTree
+     */
+    public function getRatersAsTree(): BinarySearchTree;
 
 }

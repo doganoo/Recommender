@@ -24,6 +24,7 @@ namespace doganoo\Recommender\Service\CollaborativeFiltering;
 use doganoo\DI\Object\Float\IFloatService;
 use doganoo\PHPAlgorithms\Common\Exception\InvalidKeyTypeException;
 use doganoo\PHPAlgorithms\Common\Exception\UnsupportedKeyTypeException;
+use doganoo\PHPAlgorithms\Datastructure\Graph\Tree\BinaryTree\BinarySearchNode;
 use doganoo\Recommender\Exception\InvalidRatingException;
 use doganoo\Recommender\Recommendation\Feature\IFeature;
 use doganoo\Recommender\Recommendation\Rater\IRater;
@@ -107,10 +108,13 @@ class CosineComputer {
             $firstRater  = $first->getRaters()->get($firstRaterId);
             $firstRating = $firstRater->getRating();
 
-            if (false === $second->getRaters()->containsKey($firstRaterId)) continue;
+            /** @var BinarySearchNode|null $node */
+            $node = $second->getRatersAsTree()->search($firstRater);
+
+            if (null === $node) continue;
 
             /** @var IRater $secondRater */
-            $secondRater  = $second->getRaters()->get($firstRaterId);
+            $secondRater  = $node->getValue();
             $secondRating = $secondRater->getRating();
 
             if (false === $this->inRange($firstRating)) {

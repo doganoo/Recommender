@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace doganoo\Recommender\Test\Recommendation\Feature;
 
+use doganoo\PHPAlgorithms\Datastructure\Graph\Tree\BinarySearchTree;
 use doganoo\PHPAlgorithms\Datastructure\Table\HashTable;
 use doganoo\Recommender\Recommendation\Feature\IFeature;
 use doganoo\Recommender\Recommendation\Rater\IRater;
@@ -34,11 +35,14 @@ class Feature implements IFeature {
     private $name = "";
     /** @var HashTable */
     private $raters;
+    /** @var BinarySearchTree */
+    private $ratersAsTree;
 
     public function __construct(int $id, string $name) {
-        $this->id     = $id;
-        $this->name   = $name;
-        $this->raters = new HashTable();
+        $this->id           = $id;
+        $this->name         = $name;
+        $this->raters       = new HashTable();
+        $this->ratersAsTree = new BinarySearchTree();
     }
 
     /**
@@ -78,6 +82,21 @@ class Feature implements IFeature {
 
     public function addRater(IRater $rater): void {
         $this->raters->put($rater->getId(), $rater);
+        $this->ratersAsTree->insertValue($rater);
+    }
+
+    /**
+     * @return BinarySearchTree
+     */
+    public function getRatersAsTree(): BinarySearchTree {
+        return $this->ratersAsTree;
+    }
+
+    /**
+     * @param BinarySearchTree $ratersAsTree
+     */
+    public function setRatersAsTree(BinarySearchTree $ratersAsTree): void {
+        $this->ratersAsTree = $ratersAsTree;
     }
 
 }

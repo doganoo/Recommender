@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace doganoo\Recommender\Recommendation\Rater;
 
+use doganoo\PHPAlgorithms\Common\Interfaces\IComparable;
+
 /**
  * Interface IRater
  *
@@ -29,7 +31,7 @@ namespace doganoo\Recommender\Recommendation\Rater;
  * @author  Dogan Ucar <dogan@dogan-ucar.de>
  *
  */
-interface IRater {
+interface IRater extends IComparable {
 
     /**
      * Returns the ID that identifies the rater uniquely
