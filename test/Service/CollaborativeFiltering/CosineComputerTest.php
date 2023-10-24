@@ -108,7 +108,7 @@ class CosineComputerTest extends TestCase {
         ];
     }
 
-    protected function setUp() {
+    protected function setUp(): void {
         parent::setUp();
         $this->floatService   = new FloatService();
         $this->cosineComputer = new CosineComputer(

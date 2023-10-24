@@ -11,13 +11,16 @@
   ],
   "minimum-stability": "stable",
   "require": {
-    "php": "^7.1",
-    "doganoo/php-algorithms": "^1.0",
-    "doganoo/di-services": "^0.0",
+    "php": "^8.1",
+    "doganoo/php-algorithms": "^2.0",
+    "doganoo/di-services": "^0.0.48",
     "psr/log": "^1.1"
   },
+  "conflict": {
+    "stevebauman/unfinalize": "*"
+  },
   "require-dev": {
-    "phpunit/phpunit": "^7.5"
+    "phpunit/phpunit": "^9.5"
   },
   "autoload": {
     "psr-4": {
